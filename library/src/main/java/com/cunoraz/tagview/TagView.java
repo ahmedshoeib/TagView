@@ -55,8 +55,8 @@ public class TagView extends RelativeLayout {
      */
     private int lineMargin;
     private int tagMargin;
-    private int textPaddingLeft;
-    private int textPaddingRight;
+    private int textPaddingStart;
+    private int textPaddingEnd;
     private int textPaddingTop;
     private int textPaddingBottom;
 
@@ -118,8 +118,8 @@ public class TagView extends RelativeLayout {
         TypedArray typeArray = ctx.obtainStyledAttributes(attrs, R.styleable.TagView, defStyle, defStyle);
         this.lineMargin = (int) typeArray.getDimension(R.styleable.TagView_lineMargin, Utils.dipToPx(this.getContext(), Constants.DEFAULT_LINE_MARGIN));
         this.tagMargin = (int) typeArray.getDimension(R.styleable.TagView_tagMargin, Utils.dipToPx(this.getContext(), Constants.DEFAULT_TAG_MARGIN));
-        this.textPaddingLeft = (int) typeArray.getDimension(R.styleable.TagView_textPaddingLeft, Utils.dipToPx(this.getContext(), Constants.DEFAULT_TAG_TEXT_PADDING_LEFT));
-        this.textPaddingRight = (int) typeArray.getDimension(R.styleable.TagView_textPaddingRight, Utils.dipToPx(this.getContext(), Constants.DEFAULT_TAG_TEXT_PADDING_RIGHT));
+        this.textPaddingStart = (int) typeArray.getDimension(R.styleable.TagView_textPaddingStart, Utils.dipToPx(this.getContext(), Constants.DEFAULT_TAG_TEXT_PADDING_LEFT));
+        this.textPaddingEnd = (int) typeArray.getDimension(R.styleable.TagView_textPaddingEnd, Utils.dipToPx(this.getContext(), Constants.DEFAULT_TAG_TEXT_PADDING_RIGHT));
         this.textPaddingTop = (int) typeArray.getDimension(R.styleable.TagView_textPaddingTop, Utils.dipToPx(this.getContext(), Constants.DEFAULT_TAG_TEXT_PADDING_TOP));
         this.textPaddingBottom = (int) typeArray.getDimension(R.styleable.TagView_textPaddingBottom, Utils.dipToPx(this.getContext(), Constants.DEFAULT_TAG_TEXT_PADDING_BOTTOM));
         typeArray.recycle();
@@ -167,7 +167,12 @@ public class TagView extends RelativeLayout {
         removeAllViews();
 
         // layout padding left & layout padding right
-        float total = getPaddingLeft() + getPaddingRight();
+        float total;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            total = getPaddingStart() + getPaddingEnd();
+        } else {
+            total = getPaddingLeft() + getPaddingRight();
+        }
 
         int listIndex = 1;// List Index
         int indexBottom = 1;// The Tag to add below
@@ -191,7 +196,7 @@ public class TagView extends RelativeLayout {
             TextView tagView = (TextView) tagLayout.findViewById(R.id.tv_tag_item_contain);
             tagView.setText(tag.text);
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) tagView.getLayoutParams();
-            params.setMargins(textPaddingLeft, textPaddingTop, textPaddingRight, textPaddingBottom);
+            params.setMargins(textPaddingStart, textPaddingTop, textPaddingEnd, textPaddingBottom);
             tagView.setLayoutParams(params);
             tagView.setTextColor(tag.tagTextColor);
             tagView.setTextSize(TypedValue.COMPLEX_UNIT_SP, tag.tagTextSize);
@@ -216,7 +221,7 @@ public class TagView extends RelativeLayout {
             });
 
             // calculate　of tag layout width
-            float tagWidth = tagView.getPaint().measureText(tag.text) + textPaddingLeft + textPaddingRight;
+            float tagWidth = tagView.getPaint().measureText(tag.text) + textPaddingStart + textPaddingEnd;
             // tagView padding (left & right)
 
             // deletable text
@@ -225,7 +230,7 @@ public class TagView extends RelativeLayout {
                 deletableView.setVisibility(View.VISIBLE);
                 deletableView.setText(tag.deleteIcon);
                 int offset = Utils.dipToPx(getContext(), 2f);
-                deletableView.setPadding(offset, textPaddingTop, textPaddingRight + offset, textPaddingBottom);
+                deletableView.setPadding(offset, textPaddingTop, textPaddingEnd + offset, textPaddingBottom);
                 deletableView.setTextColor(tag.deleteIndicatorColor);
                 deletableView.setTextSize(TypedValue.COMPLEX_UNIT_SP, tag.deleteIndicatorSize);
                 deletableView.setOnClickListener(new OnClickListener() {
@@ -236,7 +241,7 @@ public class TagView extends RelativeLayout {
                         }
                     }
                 });
-                tagWidth += deletableView.getPaint().measureText(tag.deleteIcon) + textPaddingLeft + textPaddingRight;
+                tagWidth += deletableView.getPaint().measureText(tag.deleteIcon) + textPaddingStart + textPaddingEnd;
                 // deletableView Padding (left & right)
             } else {
                 deletableView.setVisibility(View.GONE);
@@ -251,7 +256,11 @@ public class TagView extends RelativeLayout {
                 //need to add in new line
                 if (tagPre != null) tagParams.addRule(RelativeLayout.BELOW, indexBottom);
                 // initialize total param (layout padding left & layout padding right)
-                total = getPaddingLeft() + getPaddingRight();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    total = getPaddingStart() + getPaddingEnd();
+                } else {
+                    total = getPaddingLeft() + getPaddingRight();
+                }
                 indexBottom = listIndex;
                 indexHeader = listIndex;
             } else {
@@ -259,8 +268,13 @@ public class TagView extends RelativeLayout {
                 tagParams.addRule(RelativeLayout.ALIGN_TOP, indexHeader);
                 //not header of the line
                 if (listIndex != indexHeader) {
-                    tagParams.addRule(RelativeLayout.RIGHT_OF, listIndex - 1);
-                    tagParams.leftMargin = tagMargin;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        tagParams.addRule(RelativeLayout.END_OF, listIndex - 1);
+                        tagParams.setMarginStart(tagMargin);
+                    } else {
+                        tagParams.addRule(RelativeLayout.RIGHT_OF, listIndex - 1);
+                        tagParams.leftMargin = tagMargin;
+                    }
                     total += tagMargin;
                     if (tagPre.tagTextSize < tag.tagTextSize) {
                         indexBottom = listIndex;
@@ -376,20 +390,20 @@ public class TagView extends RelativeLayout {
         this.tagMargin = Utils.dipToPx(getContext(), tagMargin);
     }
 
-    public int getTextPaddingLeft() {
-        return textPaddingLeft;
+    public int getTextPaddingStart() {
+        return textPaddingStart;
     }
 
     public void setTextPaddingLeft(float textPaddingLeft) {
-        this.textPaddingLeft = Utils.dipToPx(getContext(), textPaddingLeft);
+        this.textPaddingStart = Utils.dipToPx(getContext(), textPaddingLeft);
     }
 
-    public int getTextPaddingRight() {
-        return textPaddingRight;
+    public int getTextPaddingEnd() {
+        return textPaddingEnd;
     }
 
-    public void setTextPaddingRight(float textPaddingRight) {
-        this.textPaddingRight = Utils.dipToPx(getContext(), textPaddingRight);
+    public void setTextPaddingEnd(float textPaddingEnd) {
+        this.textPaddingEnd = Utils.dipToPx(getContext(), textPaddingEnd);
     }
 
     public int getTextPaddingTop() {
